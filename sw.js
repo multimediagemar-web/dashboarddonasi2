@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crm-ashqaf-v1';
+const CACHE_NAME = 'crm-ashqaf-v2';
 const urlsToCache = [
   './',
   './index.html',
