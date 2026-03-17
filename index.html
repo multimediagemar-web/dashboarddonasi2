@@ -159,11 +159,11 @@
                 </div>
             </div>
 
-            <!-- Laporan Program (Dashboard) -->
+            <!-- Laporan Program (Dashboard) - MENGGUNAKAN GRID KARTU -->
             <div class="bg-white rounded-xl shadow-sm p-5 mb-8">
                 <h4 class="text-base font-bold text-gray-800 mb-4">Laporan Program Donasi</h4>
-                <div id="dashboard-program-list" class="border border-gray-200 rounded-lg">
-                    <!-- Data Program akan dirender di sini -->
+                <div id="dashboard-program-list" class="mt-2">
+                    <!-- Data Program (Kartu) akan dirender di sini -->
                 </div>
             </div>
 
@@ -283,35 +283,26 @@
         const closeBtn = document.getElementById('pwa-close-btn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Cegah Chrome agar tidak menampilkan prompt bawaan secara otomatis
             e.preventDefault();
-            // Simpan event agar bisa dipicu nanti
             deferredPrompt = e;
-            // Tampilkan banner kustom kita
             installBanner.classList.remove('hidden');
         });
 
         installBtn.addEventListener('click', async () => {
-            // Sembunyikan banner
             installBanner.classList.add('hidden');
             if (deferredPrompt) {
-                // Tampilkan prompt instalasi bawaan sistem
                 deferredPrompt.prompt();
-                // Tunggu respon pengguna
                 const { outcome } = await deferredPrompt.userChoice;
                 console.log(`Respon instalasi: ${outcome}`);
-                // Hapus prompt yang sudah dipakai
                 deferredPrompt = null;
             }
         });
 
         closeBtn.addEventListener('click', () => {
-            // Sembunyikan banner jika user mengklik silang
             installBanner.classList.add('hidden');
         });
 
         window.addEventListener('appinstalled', () => {
-            // Sembunyikan banner jika aplikasi berhasil diinstal
             installBanner.classList.add('hidden');
             deferredPrompt = null;
             console.log('Aplikasi berhasil diinstal');
@@ -351,7 +342,7 @@
         let allDonatorsData = {}; 
         let globalProgramData = [];
         let programCurrentPage = 1;
-        let programRowsPerPage = 10;
+        let programRowsPerPage = 6; // Default untuk Grid/Card (6 kartu)
         
         const getTodayString = () => {
             const d = new Date();
@@ -572,7 +563,7 @@
             });
             globalProgramData = Object.values(progs).sort((a,b) => b.total - a.total);
             programCurrentPage = 1;
-            renderProgramTable();
+            renderProgramTable(); // Ini akan memanggil render layout kartu
 
             syncStatus.textContent = "• Sinkron";
             syncStatus.className = "text-green-600 ml-2";
@@ -582,7 +573,7 @@
         function renderProgramTable() {
             const container = document.getElementById('dashboard-program-list');
             if (globalProgramData.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 italic p-4">Tidak ada data untuk filter ini.</p>';
+                container.innerHTML = '<p class="text-sm text-gray-500 italic p-4 border border-gray-200 rounded-lg">Tidak ada data untuk filter ini.</p>';
                 return;
             }
 
@@ -597,44 +588,49 @@
             const startDisplay = totalItems === 0 ? 0 : startIndex + 1;
             const endDisplay = Math.min(startIndex + programRowsPerPage, totalItems);
 
+            // Perubahan menjadi GRID KARTU yang Simpel
             container.innerHTML = `
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Program</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Jml Transaksi</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Pendapatan</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Rata-rata Donasi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                            ${paginatedData.map(p => `
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-3 font-medium text-gray-900">${p.nama}</td>
-                                    <td class="px-6 py-3 text-right text-gray-600">${p.trx}</td>
-                                    <td class="px-6 py-3 text-right font-bold text-indigo-700">${formatCurrency(p.total)}</td>
-                                    <td class="px-6 py-3 text-right font-semibold text-orange-600">${formatCurrency(p.total / p.trx)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+                    ${paginatedData.map(p => `
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 group-hover:bg-indigo-600 transition-colors"></div>
+                            <h5 class="font-bold text-gray-800 mb-1 truncate pr-2 ml-1" title="${p.nama}">${p.nama}</h5>
+                            
+                            <div class="mt-4 ml-1">
+                                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Pendapatan Program</p>
+                                <p class="text-xl font-black text-indigo-700">${formatCurrency(p.total)}</p>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-between items-end border-t border-gray-100 pt-3 ml-1">
+                                <div>
+                                    <p class="text-[10px] text-gray-500 uppercase font-semibold">Transaksi</p>
+                                    <p class="text-sm font-bold text-gray-700">${p.trx}x</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] text-gray-500 uppercase font-semibold">Rata-rata</p>
+                                    <p class="text-sm font-bold text-orange-600">${formatCurrency(p.total / p.trx)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="p-3 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3 rounded-b-lg">
+                
+                <!-- Pagination untuk Kartu Program -->
+                <div class="mt-5 p-3 border border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3 rounded-lg">
                     <div class="flex items-center gap-2">
-                        <label class="text-xs text-gray-600 font-medium">Baris:</label>
+                        <label class="text-xs text-gray-600 font-medium">Tampil:</label>
                         <select id="program-rows-per-page" class="border border-gray-300 rounded text-xs p-1 focus:ring-indigo-500 bg-white text-gray-700">
-                            <option value="5" ${programRowsPerPage === 5 ? 'selected' : ''}>5</option>
-                            <option value="10" ${programRowsPerPage === 10 ? 'selected' : ''}>10</option>
-                            <option value="25" ${programRowsPerPage === 25 ? 'selected' : ''}>25</option>
-                            <option value="50" ${programRowsPerPage === 50 ? 'selected' : ''}>50</option>
+                            <option value="6" ${programRowsPerPage === 6 ? 'selected' : ''}>6 Program</option>
+                            <option value="12" ${programRowsPerPage === 12 ? 'selected' : ''}>12 Program</option>
+                            <option value="24" ${programRowsPerPage === 24 ? 'selected' : ''}>24 Program</option>
+                            <option value="48" ${programRowsPerPage === 48 ? 'selected' : ''}>48 Program</option>
                         </select>
                     </div>
                     <div class="text-xs text-gray-500 font-medium">Data ${startDisplay}-${endDisplay} dari ${totalItems}</div>
                     <div class="flex items-center gap-1">
-                        <button id="btn-prog-prev" class="px-2 py-1 border border-gray-300 rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-xs font-medium" ${programCurrentPage === 1 ? 'disabled' : ''}>&lt; Prev</button>
-                        <span class="text-xs text-gray-700 font-medium px-2">${programCurrentPage} / ${totalPages}</span>
-                        <button id="btn-prog-next" class="px-2 py-1 border border-gray-300 rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-xs font-medium" ${programCurrentPage === totalPages ? 'disabled' : ''}>Next &gt;</button>
+                        <button id="btn-prog-prev" class="px-3 py-1.5 border border-gray-300 rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-xs font-medium transition-colors" ${programCurrentPage === 1 ? 'disabled' : ''}>&lt; Prev</button>
+                        <span class="text-xs text-gray-700 font-medium px-3">${programCurrentPage} / ${totalPages}</span>
+                        <button id="btn-prog-next" class="px-3 py-1.5 border border-gray-300 rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-xs font-medium transition-colors" ${programCurrentPage === totalPages ? 'disabled' : ''}>Next &gt;</button>
                     </div>
                 </div>
             `;
